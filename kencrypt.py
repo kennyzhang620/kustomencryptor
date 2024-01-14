@@ -4,13 +4,19 @@ import sys
 import os
 import string
 import secrets
+import pickle
+import ntpath
+
+def path_leaf(path):
+    head, tail = ntpath.split(path)
+    return tail or ntpath.basename(head)
 
 def generateRandStr():
     letters = list(string.ascii_lowercase + string.ascii_uppercase + string.punctuation + string.digits)
     return ''.join(secrets.choice(letters) for i in range(10))
 
 message = ""
-VALUES = [None,None, 2**256, generateRandStr()]
+VALUES = [None,255, 2**256, generateRandStr()]
 
 def IO_String_Hash(strI, max_range):
     hash = 0;
@@ -23,6 +29,8 @@ def IO_String_Hash(strI, max_range):
 
 def scatter(seed: str):
     r = IO_String_Hash(seed, VALUES[2])
+    if len(seed) <= 8:
+        print("WARNING: Insufficient passphrase specified. For maximum security, please specify a secure passphrase with at least 10 characters or more.")
     cipher = np.linspace(0, VALUES[1], num=VALUES[1]+1)
     rp.seed(r)
     rp.shuffle(cipher)
@@ -30,7 +38,7 @@ def scatter(seed: str):
 
 def unscatter(seed: str):
     cipher = scatter(seed)
-    out = dict()
+    out = np.linspace(0, VALUES[1], num=VALUES[1]+1)
 
     for i in range(cipher.shape[0]):
         out[int(cipher[i])] = i
@@ -51,7 +59,6 @@ def unwrap(st, pad=-1):
         uw.append(a)
 
     VALUES[0] = min(uw)
-    VALUES[1] = max(uw)
 
     sz = len(uw)
     ns = int(np.sqrt(sz) + 1)
@@ -70,9 +77,9 @@ def unwrap(st, pad=-1):
     for i in range(r):
         uw.append(0)
 
-    print("Wrapping...")
 
-    CAESAR = scatter(VALUES[3])     
+    CAESAR = scatter(VALUES[3])   
+    print("Wrapping...")
     uw = list(map(lambda a: scramble(a, CAESAR), uw))
     uw = list(map(lambda a: scramble(a, CAESAR), uw))
     uw = list(map(lambda a: scramble(a, CAESAR), uw))
@@ -105,15 +112,13 @@ def clamp(x):
     
 def wrap(mat):
     A = mat.reshape(-1,1)
-    res = []
 
     CAESAR = unscatter(VALUES[3])
-
+    unscr = np.vectorize(lambda v: clamp(unscramble(unscramble(unscramble(round(v), CAESAR),CAESAR),CAESAR)))
     print("Unwrapping...")
-    for v in A:
-        res.append(clamp(unscramble(unscramble(unscramble(round(v[0]), CAESAR),CAESAR),CAESAR)))
+    A = unscr(A).reshape(-1,)
 
-    return bytes(res)
+    return bytes(list(A))
 
 def key_gen(s, d=-1, condMin = -1):
 
@@ -155,6 +160,23 @@ def getSize():
     U = unwrap(F)
     print(U.shape)
 
+
+def encryptHeader(header:str, K):
+    b = bytearray()
+    b.extend(map(ord, header))
+
+    U = unwrap(b, K.shape[0])
+    cipher = encrypt(U, K, unroll=True)
+
+    return cipher
+
+def decryptHeader(cipher, key):
+
+    pt = decrypt(cipher, key, unroll=True)
+
+    return wrap(pt).decode("utf-8") 
+
+
 def encryptFile(d=8, cond=500000): #-1
     f = open(sys.argv[1], mode="rb")
      
@@ -166,33 +188,55 @@ def encryptFile(d=8, cond=500000): #-1
     # Closing the opened file
     f.close()
     K = key_gen(0, d=d,condMin=cond)
-
-    U = unwrap(F, K.shape[0])
     K_inv = key_inv(K)
 
+    print("Packing file contents..")
+    U = unwrap(F, K.shape[0])
     cipher = encrypt(U, K, unroll=True)
 
-    np.save(sys.argv[1] + '.cipher.npy', cipher)
-    np.save(sys.argv[1] + '.key.npy', K_inv)
+    print("Packing file header and name...")
+    header = encryptHeader(path_leaf(sys.argv[1]), K)
+
+    dataout = [header, cipher]
+    fname = os.path.dirname(sys.argv[1]) + '/' + str(secrets.randbelow(2**32))
+    fo = open(sys.argv[1], 'wb')
+    pickle.dump(dataout, fo)
+    fo.close()
+
+    os.rename(sys.argv[1], fname)
+
+   # np.save(sys.argv[1] + '.cipher.npy', cipher)
+    np.save(fname, K_inv)
+    os.rename(fname + '.npy', fname + '.KEY')
+
 
 def decryptFile():
     VALUES[3] = sys.argv[4]
 
-    A = np.load(sys.argv[1], allow_pickle=True)
-    B = np.load(sys.argv[2], allow_pickle=True)
+    fname = sys.argv[1]
+    fi = open(fname, 'rb')
 
-    testd = decrypt(A, B, unroll=True)
-    VALUES[1] = np.max(testd).astype(int)
+    A = pickle.load(fi) #np.load(sys.argv[1], allow_pickle=True)
+    B = np.load(sys.argv[2], allow_pickle=True)
+    fi.close()
+
+    print("Unpacking file header and name...")
+    header = decryptHeader(A[0], B)
+    print("Unpacking file contents..")
+    testd = decrypt(A[1], B, unroll=True)
     R = wrap(testd)
 
-    f = open(sys.argv[1] + '.plain.txt',mode="wb")
+    f = open(fname,mode="wb")
     f.write(bytes(R))
     f.close()
+
+    os.rename(fname, os.path.dirname(sys.argv[1]) + '/' + header.rstrip('\x00'))
 
 def generateKey(d=8, cond=500000): #-1
     K = key_gen(0, d=int(d),condMin=int(cond))
     K_inv = key_inv(K)
-    np.save(sys.argv[1] + '.key.npy', K_inv)
+    np.save(sys.argv[1], K_inv)
+    os.rename(sys.argv[1] + '.npy', sys.argv[1] + '.KEY')
 
 def encryptKey():
     f = open(sys.argv[1], mode="rb")
@@ -206,10 +250,22 @@ def encryptKey():
     # Closing the opened file
     f.close()
 
+    print("Packing file contents..")
     U = unwrap(F, B.shape[0])
     cipher = encrypt(U, np.linalg.inv(B), unroll=True)
+    print("Packing file header and name...")
+    header = encryptHeader(path_leaf(sys.argv[1]), np.linalg.inv(B))
 
-    np.save(sys.argv[1] + '.cipher.npy', cipher)
+    dataout = [header, cipher]
+    fname = os.path.dirname(sys.argv[1]) + '/' +  str(secrets.randbelow(2**32))
+    fo = open(sys.argv[1], 'wb')
+    pickle.dump(dataout, fo)
+    fo.close()
+
+    os.rename(sys.argv[1], fname)
+
+
+   # np.save(sys.argv[1] + '.cipher.npy', cipher)
 
 
 def generateHashedBytes(bytein: bytes):
@@ -228,7 +284,6 @@ def generateHashedBytes(bytein: bytes):
     cipher = encrypt(U, B, unroll=True)
 
     return bytes(cipher.reshape(-1,1))
-
 
 def testEncryption():
     msg = '''
@@ -258,22 +313,20 @@ quickshop (chest shops)
     b.extend(map(ord, msg))
     
     K = key_gen(0, d=10,condMin=500000)
-    U = unwrap(b, K.shape[0])
-
     K_inv = key_inv(K)
 
     print("E(x)", K)
     print("D(x)", K_inv)
     print("Cond:", np.linalg.cond(K))
-    cipher = encrypt(U, K, unroll=True)
-
+    cipher = encryptHeader(msg, K)
     print(msg)
     #print(U)
     #print(cipher)
     #print(cipher.shape)
     #print(wrap(cipher))
 
-    testd = decrypt(cipher, K_inv, unroll=True)
-    print(wrap(testd).decode("utf-8") )
+    testd = decryptHeader(cipher,K_inv)
 
-    assert msg in wrap(testd).decode("utf-8")
+    assert msg in testd
+
+    print(testd)
