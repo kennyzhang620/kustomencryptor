@@ -111,16 +111,14 @@ def clamp(x):
     return x
     
 def wrap(mat):
-    A = mat.reshape(-1,1)
-    res = []
-
+    A = mat.reshape(-1,)
     CAESAR = unscatter(VALUES[3])
 
     print("Unwrapping...")
-    for v in A:
-        res.append(clamp(unscramble(unscramble(unscramble(round(v[0]), CAESAR),CAESAR),CAESAR)))
+    for v in range(A.shape[0]):
+        A[v] = clamp(unscramble(unscramble(unscramble(round(A[v]), CAESAR),CAESAR),CAESAR))
 
-    return bytes(res)
+    return bytes(list(A.astype(int)))
 
 def key_gen(s, d=-1, condMin = -1):
 
