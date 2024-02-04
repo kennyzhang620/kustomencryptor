@@ -16,7 +16,7 @@ def generateRandStr():
     return ''.join(secrets.choice(letters) for i in range(10))
 
 message = ""
-VALUES = [None,255, 2**256, generateRandStr()]
+VALUES = [None,255, 2**256, generateRandStr(), True, None, '', '']
 
 def IO_String_Hash(strI, max_range):
     hash = 0;
@@ -53,7 +53,7 @@ def unscramble(x, cipher):
 def scramble(x, cipher):
     return int(cipher[x])
 
-def unwrap(st, pad=-1):
+def unwrap(st, pad=8): #-1
     uw = []
     for a in st:
         uw.append(a)
@@ -80,14 +80,19 @@ def unwrap(st, pad=-1):
 
     CAESAR = scatter(VALUES[3])   
     print("Wrapping...")
-    uw = list(map(lambda a: scramble(a, CAESAR), uw))
-    uw = list(map(lambda a: scramble(a, CAESAR), uw))
-    uw = list(map(lambda a: scramble(a, CAESAR), uw))
+
+    if (VALUES[4] == True):
+        for i in range(len(uw)):
+            uw[i] = scramble(scramble(scramble(uw[i], CAESAR),CAESAR),CAESAR)
+    else:
+        uw = list(map(lambda a: scramble(a, CAESAR), uw))
+        uw = list(map(lambda a: scramble(a, CAESAR), uw))
+        uw = list(map(lambda a: scramble(a, CAESAR), uw))
 
     if pad == -1:
-        return np.array(uw).reshape(ns,ns)
+        return (np.array(uw).reshape(ns,ns),r)
     else:
-        return np.array(uw).reshape(ns,-1)
+        return (np.array(uw).reshape(ns,-1),r)
 
 
 def encrypt(uw, key, unroll):
@@ -110,15 +115,24 @@ def clamp(x):
 
     return x
     
-def wrap(mat):
+def wrap(mat, offset=0):
     A = mat.reshape(-1,)
+
     CAESAR = unscatter(VALUES[3])
 
-    print("Unwrapping...")
-    for v in range(A.shape[0]):
-        A[v] = clamp(unscramble(unscramble(unscramble(round(A[v]), CAESAR),CAESAR),CAESAR))
+    if (VALUES[4] == True):
+        for i in range(A.shape[0]):
+            A[i] = unscramble(unscramble(unscramble(round(A[i]), CAESAR),CAESAR),CAESAR)
+        A = list(A.astype(int))
+    else:
+        A = list(np.round(A).astype(int))
+        A = list(map(lambda v: unscramble(v, CAESAR), A))
+        A = list(map(lambda v: unscramble(v, CAESAR), A))
+        A = list(map(lambda v: unscramble(v, CAESAR), A))
 
-    return bytes(list(A.astype(int)))
+   # unscr = np.vectorize(lambda v: clamp(unscramble(unscramble(unscramble(round(v), CAESAR),CAESAR),CAESAR)))
+    print("Unwrapping...")
+    return bytes(A[:len(A) - offset])
 
 def key_gen(s, d=-1, condMin = -1):
 
@@ -150,15 +164,14 @@ def key_inv(mat):
     return np.linalg.inv(mat)
 
 def getSize():
-    f = open(sys.argv[1], mode="rb")
+    f = open(VALUES[6], mode="rb")
      
     # Reading file data with read() method
     data = f.read()
     # Printing our byte sequenced data 
     F = data
-    
-    U = unwrap(F)
-    print(U.shape)
+    VALUES[0] = 0
+    print(len(F))
 
 
 def encryptHeader(header:str, K):
@@ -166,7 +179,7 @@ def encryptHeader(header:str, K):
     b.extend(map(ord, header))
 
     U = unwrap(b, K.shape[0])
-    cipher = encrypt(U, K, unroll=True)
+    cipher = encrypt(U[0], K, unroll=True)
 
     return cipher
 
@@ -178,7 +191,7 @@ def decryptHeader(cipher, key):
 
 
 def encryptFile(d=8, cond=500000): #-1
-    f = open(sys.argv[1], mode="rb")
+    f = open(VALUES[6], mode="rb")
      
     # Reading file data with read() method
     data = f.read()
@@ -192,55 +205,53 @@ def encryptFile(d=8, cond=500000): #-1
 
     print("Packing file contents..")
     U = unwrap(F, K.shape[0])
-    cipher = encrypt(U, K, unroll=True)
+    cipher = encrypt(U[0], K, unroll=True)
 
     print("Packing file header and name...")
-    header = encryptHeader(path_leaf(sys.argv[1]), K)
+    header = encryptHeader(path_leaf(VALUES[6]), K)
 
-    dataout = [header, cipher]
-    fname = os.path.dirname(sys.argv[1]) + '/' + str(secrets.randbelow(2**32))
-    fo = open(sys.argv[1], 'wb')
+    dataout = [header, cipher, U[1]]
+    fname = os.path.dirname(VALUES[6]) + '/' + (VALUES[5] if VALUES[5] != None else str(secrets.randbelow(2**32)))
+    fo = open(VALUES[6], 'wb')
     pickle.dump(dataout, fo)
     fo.close()
 
-    os.rename(sys.argv[1], fname)
+    os.rename(VALUES[6], fname)
 
-   # np.save(sys.argv[1] + '.cipher.npy', cipher)
+   # np.save(VALUES[6] + '.cipher.npy', cipher)
     np.save(fname, K_inv)
     os.rename(fname + '.npy', fname + '.KEY')
 
 
 def decryptFile():
-    VALUES[3] = sys.argv[4]
-
-    fname = sys.argv[1]
+    fname = VALUES[6]
     fi = open(fname, 'rb')
 
-    A = pickle.load(fi) #np.load(sys.argv[1], allow_pickle=True)
-    B = np.load(sys.argv[2], allow_pickle=True)
+    A = pickle.load(fi) #np.load(VALUES[6], allow_pickle=True)
+    B = np.load(VALUES[7], allow_pickle=True)
     fi.close()
 
     print("Unpacking file header and name...")
     header = decryptHeader(A[0], B)
     print("Unpacking file contents..")
     testd = decrypt(A[1], B, unroll=True)
-    R = wrap(testd)
+    R = wrap(testd, A[2])
 
     f = open(fname,mode="wb")
     f.write(bytes(R))
     f.close()
 
-    os.rename(fname, os.path.dirname(sys.argv[1]) + '/' + header.rstrip('\x00'))
+    os.rename(fname, os.path.dirname(VALUES[6]) + '/' + header.rstrip('\x00'))
 
 def generateKey(d=8, cond=500000): #-1
     K = key_gen(0, d=int(d),condMin=int(cond))
     K_inv = key_inv(K)
-    np.save(sys.argv[1], K_inv)
-    os.rename(sys.argv[1] + '.npy', sys.argv[1] + '.KEY')
+    np.save(VALUES[6], K_inv)
+    os.rename(VALUES[6] + '.npy', VALUES[6] + '.KEY')
 
 def encryptKey():
-    f = open(sys.argv[1], mode="rb")
-    B = np.load(sys.argv[2], allow_pickle=True)
+    f = open(VALUES[6], mode="rb")
+    B = np.load(VALUES[7], allow_pickle=True)
      
     # Reading file data with read() method
     data = f.read()
@@ -252,24 +263,24 @@ def encryptKey():
 
     print("Packing file contents..")
     U = unwrap(F, B.shape[0])
-    cipher = encrypt(U, np.linalg.inv(B), unroll=True)
+    cipher = encrypt(U[0], np.linalg.inv(B), unroll=True)
     print("Packing file header and name...")
-    header = encryptHeader(path_leaf(sys.argv[1]), np.linalg.inv(B))
+    header = encryptHeader(path_leaf(VALUES[6]), np.linalg.inv(B))
 
-    dataout = [header, cipher]
-    fname = os.path.dirname(sys.argv[1]) + '/' +  str(secrets.randbelow(2**32))
-    fo = open(sys.argv[1], 'wb')
+    dataout = [header, cipher, U[1]]
+    fname = os.path.dirname(VALUES[6]) + '/' + (VALUES[5] if VALUES[5] != None else str(secrets.randbelow(2**32)))
+    fo = open(VALUES[6], 'wb')
     pickle.dump(dataout, fo)
     fo.close()
 
-    os.rename(sys.argv[1], fname)
+    os.rename(VALUES[6], fname)
 
 
-   # np.save(sys.argv[1] + '.cipher.npy', cipher)
+   # np.save(VALUES[6] + '.cipher.npy', cipher)
 
 
 def generateHashedBytes(bytein: bytes):
-    B = np.load(sys.argv[2], allow_pickle=True)
+    B = np.load(VALUES[7], allow_pickle=True)
      
     # Reading file data with read() method
     # Printing our byte sequenced data 
@@ -281,7 +292,7 @@ def generateHashedBytes(bytein: bytes):
     B[rp.choice(range(B.shape[0])), :] = 0
 
     U = unwrap(F, B.shape[0])
-    cipher = encrypt(U, B, unroll=True)
+    cipher = encrypt(U[0], B, unroll=True)
 
     return bytes(cipher.reshape(-1,1))
 
@@ -307,7 +318,7 @@ quickshop (chest shops)
     s = "ABCDDEFG"
     b = bytearray()
     b.extend(map(ord, s))
-    print(wrap(unwrap(b)).decode("utf-8") )
+    print(wrap(unwrap(b)[0]).decode("utf-8") )
 
     b = bytearray()
     b.extend(map(ord, msg))

@@ -22,13 +22,19 @@ def help():
     print('kustomencrypt <base> <key> --sh <exponent>')
 
 def main():
+    VALUES[4] = False
+    print("Low memory mode:", VALUES[4])
     try:
-        if (len(sys.argv) == 1):
+        if (len(sys.argv) == 2 and (sys.argv[1] == '--t' or sys.argv[1] == '--test')):
             testEncryption()
 
-        if (len(sys.argv) == 2 and sys.argv[1] == '--help'):
+        if (len(sys.argv) == 1 or (len(sys.argv) == 2 and (sys.argv[1] == '--h' or sys.argv[1] == '--help'))):
             VALUES[0] = 0
             help()
+
+        if (len(sys.argv) >= 3):
+            VALUES[6] = sys.argv[1];
+            VALUES[7] = sys.argv[2]
 
         if (len(sys.argv) == 3):
             if (sys.argv[2] == '--e'):
@@ -74,6 +80,7 @@ def main():
                 b.extend(map(ord, s))
                 print(''.join(list(map(chr, list(map(lambda x: x % 127 + 33,list(generateHashedBytes(b)))))))  )
             if (sys.argv[3] == '--d'):
+                VALUES[3] = sys.argv[4]
                 decryptFile()
                 VALUES[0] = 0
         
@@ -87,6 +94,11 @@ def main():
                 VALUES[3] = sys.argv[3]
                 encryptFile(int(sys.argv[4]), int(sys.argv[5]))
 
+        if (len(sys.argv) == 6):
+            if (sys.argv[3] == '--ekp'):
+                VALUES[3] = sys.argv[4]
+                VALUES[5] = str(sys.argv[5])
+                encryptKey()
 
         if (VALUES[0] != None):     
             print("Operation complete!")
