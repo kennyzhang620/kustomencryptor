@@ -1,0 +1,39 @@
+﻿  WindowsProject1.cpp
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(67,167): warning C4267: '=': conversion from 'size_t' to 'uint32', possible loss of data
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(69,104): warning C4267: '=': conversion from 'size_t' to 'uint32', possible loss of data
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(188,24): warning C4244: '=': conversion from '_Ty' to 'float', possible loss of data
+          with
+          [
+              _Ty=double
+          ]
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(191,24): warning C4244: '=': conversion from '_Ty' to 'float', possible loss of data
+          with
+          [
+              _Ty=double
+          ]
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(194,24): warning C4244: '=': conversion from '_Ty' to 'float', possible loss of data
+          with
+          [
+              _Ty=double
+          ]
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(197,24): warning C4244: '=': conversion from '_Ty' to 'float', possible loss of data
+          with
+          [
+              _Ty=double
+          ]
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(218,28): warning C4244: '=': conversion from 'float' to 'uint8_t', possible loss of data
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(218,51): warning C4244: '=': conversion from 'float' to 'uint8_t', possible loss of data
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(228,39): warning C4244: '=': conversion from 'const float' to 'uint8', possible loss of data
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(229,39): warning C4244: '=': conversion from 'const float' to 'uint8', possible loss of data
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(230,42): warning C4244: '-=': conversion from 'const float' to 'uint8', possible loss of data
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(240,39): warning C4244: '=': conversion from 'const float' to 'uint8', possible loss of data
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(241,39): warning C4244: '=': conversion from 'const float' to 'uint8', possible loss of data
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(242,42): warning C4244: '-=': conversion from 'const float' to 'uint8', possible loss of data
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(253,39): warning C4244: '=': conversion from 'const float' to 'uint8', possible loss of data
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(254,39): warning C4244: '=': conversion from 'const float' to 'uint8', possible loss of data
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(255,42): warning C4244: '-=': conversion from 'const float' to 'uint8', possible loss of data
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(264,39): warning C4244: '=': conversion from 'const float' to 'uint8', possible loss of data
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(265,39): warning C4244: '=': conversion from 'const float' to 'uint8', possible loss of data
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(266,42): warning C4244: '-=': conversion from 'const float' to 'uint8', possible loss of data
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(627,16): warning C4101: 'bm': unreferenced local variable
+  WindowsProject1.vcxproj -> C:\Users\kenny\source\repos\WindowsProject1\x64\Debug\WindowsProject1.exe

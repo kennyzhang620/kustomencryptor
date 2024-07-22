@@ -1,0 +1,30 @@
+﻿  FPMAIN.h
+  WindowsProject1.cpp
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(33,103): warning C4267: '=': conversion from 'size_t' to 'uint32', possible loss of data
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(35,57): warning C4267: '=': conversion from 'size_t' to 'uint32', possible loss of data
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(160,24): warning C4244: '=': conversion from '_Ty' to 'float', possible loss of data
+          with
+          [
+              _Ty=double
+          ]
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(163,24): warning C4244: '=': conversion from '_Ty' to 'float', possible loss of data
+          with
+          [
+              _Ty=double
+          ]
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(166,24): warning C4244: '=': conversion from '_Ty' to 'float', possible loss of data
+          with
+          [
+              _Ty=double
+          ]
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(169,24): warning C4244: '=': conversion from '_Ty' to 'float', possible loss of data
+          with
+          [
+              _Ty=double
+          ]
+C:\Users\kenny\source\repos\WindowsProject1\WindowsProject1\WindowsProject1.cpp(452,16): warning C4101: 'bm': unreferenced local variable
+WindowsProject1.obj : error LNK2001: unresolved external symbol WinBioOpenSession
+WindowsProject1.obj : error LNK2001: unresolved external symbol WinBioFree
+WindowsProject1.obj : error LNK2001: unresolved external symbol WinBioCaptureSample
+WindowsProject1.obj : error LNK2001: unresolved external symbol WinBioCloseSession
+C:\Users\kenny\source\repos\WindowsProject1\x64\Release\WindowsProject1.exe : fatal error LNK1120: 4 unresolved externals
